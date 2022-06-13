@@ -4,9 +4,12 @@ namespace App\Nova;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules;
+use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\FormData;
 use Laravel\Nova\Fields\Gravatar;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Password;
+use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
@@ -62,6 +65,24 @@ class User extends Resource
                 ->onlyOnForms()
                 ->creationRules('required', Rules\Password::defaults())
                 ->updateRules('nullable', Rules\Password::defaults()),
+
+            Select::make('Type')->options([
+                'staff' => 'Staff',
+                'customer' => 'Customer',
+            ])->rules(['required']),
+
+            BelongsTo::make('Bind User', 'instructor', User::class)
+                ->dependsOn(
+                    ['type'],
+                    function (BelongsTo $field, NovaRequest $request, FormData $formData) {
+                        if ($formData->type === 'customer') {
+                            $field->readonly(false)->rules(['required']);
+                        }else{
+                            $field->readonly(true)->nullable()->rules(['nullable']);
+                        }
+                    }
+                ),
+
         ];
     }
 
